@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    env_file: .env 
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: backend_app
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: db 
+      DB_PORT: 3306
+    depends_on:
+      - db
+    command: sh -c "sleep 40 && npm start" 
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_app
+    restart: always
+    ports:
+      - "5173:80"
+    environment:
+      VITE_BACKEND_URL: http://localhost:3001
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
